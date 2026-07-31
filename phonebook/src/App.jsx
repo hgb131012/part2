@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Form = (props) => {
   return (
@@ -49,6 +50,13 @@ const App = () => {
   const [newName, setNewName] = useState('');
   const [newNum, setNewNum] = useState('');
   const [newFilter, setNewFilter] = useState('');
+
+  useEffect(() => {
+    axios.get('http://localhost:3004/persons').then((response) => {
+      setPersons(response.data);
+      console.log('Completed getting data!');
+    });
+  }, [])
 
   const addNewPerson = (personName, personNumber) => {
     event.preventDefault();
