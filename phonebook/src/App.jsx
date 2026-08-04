@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import services from './services.jsx';
+
+const DelBtn = ({ delPerson, personId, personName }) => {
+  return (
+    <button style={{marginLeft: '10px'}} onClick={() => delPerson(personId, personName)}>Delete</button>
+  )
+}
 
 const Form = (props) => {
   return (
@@ -29,17 +35,31 @@ const Filter = (props) => {
   )
 }
 
-const Persons = ({ persons, filteredPersons }) => {
+const Persons = ({ persons, filteredPersons, delPerson }) => {
   if(filteredPersons.length === 0) {
     return (
       <div>
-        {persons.map((person) => <p key={`${person.name}`}>{person.name}: {person.number}</p>)}
+        {persons.map((person) => {
+          return (
+            <div key={`${person.name}`}>
+              <span>{person.name}: {person.number}</span>
+              <DelBtn delPerson={delPerson} personId={person.id} personName={person.name} />
+            </div> )
+        })}
       </div>
     )
   } else {
     return (
       <div>
-        {filteredPersons.map((person) => <p key={`${person.name}`}>{person.name}: {person.number}</p>)}
+        {filteredPersons.map((person) => {
+          return (
+            <div key={`${person.name}`}>
+              <span>{person.name}: {person.number}</span>
+              <DelBtn delPerson={delPerson} personId={person.id} personName={person.name} />
+            </div>
+          )
+          })
+        }
       </div>
     )
   }
@@ -52,11 +72,23 @@ const App = () => {
   const [newFilter, setNewFilter] = useState('');
 
   useEffect(() => {
-    axios.get('http://localhost:3004/persons').then((response) => {
-      setPersons(response.data);
-      console.log('Completed getting data!');
-    });
+    services
+      .getAll()
+      .then((response) => {
+        setPersons(response.data);
+        console.log('Completed getting data!')
+      })
+      .catch((error) => console.log(`${error}`));
   }, [])
+
+  const delPerson = (personId, personName) => {
+    if(window.confirm(`Delete ${personName} ?`)) {
+      services
+        .delOne(personId)
+        .then(() => setPersons(p => p.filter((person) => person.id != personId)))
+        .catch((error) => console.log(`${error}`));
+    } else return;
+  }
 
   const addNewPerson = (personName, personNumber) => {
     event.preventDefault();
@@ -68,7 +100,14 @@ const App = () => {
     if(persons.some((person) => person.name === personName)) {
       alert(`${personName} is already added to phonebook`);
     } else {
-      setPersons(prePersons => [...prePersons, {name: personName, number: personNumber}]);
+      const newPerson = { name: personName, number: personNumber };
+      services
+        .addNew(newPerson)
+        .then((response) => {
+          setPersons(persons.concat(response.data));
+          console.log('New person added successfully!');
+        })
+        .catch(error => console.log(`${error}`));
     }
     setNewName('');
     setNewNum('');
@@ -100,7 +139,7 @@ const App = () => {
       <Form newName={newName} newNum={newNum} handleNameInputChange={handleNameInputChange} 
             handleNumInputChange={handleNumInputChange} addNewPerson={addNewPerson} />
       <h2>Numbers</h2>
-      <Persons persons={persons} filteredPersons={filteredPersons} />
+      <Persons persons={persons} filteredPersons={filteredPersons} delPerson={delPerson} />
     </div>
   )
 }
