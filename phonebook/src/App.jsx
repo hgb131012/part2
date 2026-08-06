@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react';
 import services from './services.jsx';
 
+const Message = ({ content }) => {
+  if(content === '') {
+    return (
+      <p style={{visibility: 'hidden'}}>{content}</p>
+    )
+  } else {
+    return (
+      <p style={{color: 'green', borderRadius: '10px', border: 'green solid 2px', fontSize: '25px'}}>
+        {content}
+      </p>
+    )
+  }
+  
+}
+
 const DelBtn = ({ delPerson, personId, personName }) => {
   return (
     <button style={{marginLeft: '10px'}} onClick={() => delPerson(personId, personName)}>Delete</button>
@@ -66,9 +81,10 @@ const Persons = ({ persons, filteredPersons, delPerson }) => {
 }
 
 const App = () => {
+  const [newNum, setNewNum] = useState('');
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState('');
-  const [newNum, setNewNum] = useState('');
+  const [message, setMessage] = useState('');
   const [newFilter, setNewFilter] = useState('');
 
   useEffect(() => {
@@ -101,13 +117,17 @@ const App = () => {
       alert(`${personName} is already added to phonebook`);
     } else {
       const newPerson = { name: personName, number: personNumber };
-      services
+      setMessage(`Added ${newPerson.name}`);
+      setTimeout(() => {
+        services
         .addNew(newPerson)
         .then((response) => {
           setPersons(persons.concat(response.data));
           console.log('New person added successfully!');
+          setMessage('');
         })
         .catch(error => console.log(`${error}`));
+      }, 2500);
     }
     setNewName('');
     setNewNum('');
@@ -134,6 +154,7 @@ const App = () => {
   return (
     <div>
       <h1>Phonebook</h1>
+      <Message content={message} />
       <Filter newFilter={newFilter} handleFilterChange={handleFilterChange} />
       <h2>Add a new</h2>
       <Form newName={newName} newNum={newNum} handleNameInputChange={handleNameInputChange} 
